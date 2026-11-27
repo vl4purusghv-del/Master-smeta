@@ -20,6 +20,11 @@ body{margin:0;padding:16px;background:var(--host-bg);font-family:system-ui,-appl
 .ms button,.ms .btn{font-family:inherit;font-size:14px;border-radius:8px;padding:8px 12px;border:1px solid var(--host-border);background:var(--host-secondary);color:var(--host-secondary-fg);cursor:pointer;display:inline-block;text-decoration:none;line-height:1.4}
 .ms button.pri,.ms .btn.pri{background:var(--host-primary);color:#fff;border-color:var(--host-primary)}
 .ms button.x{padding:2px 8px;font-size:12px;background:transparent;color:var(--host-fg-muted)}
+.ms button.chip{padding:3px 0;width:30px;font-size:12px;text-align:center}
+.ms button.chip.on{background:var(--host-primary);color:#fff;border-color:var(--host-primary)}
+.ms button.vrow{display:flex;justify-content:space-between;width:100%;margin-bottom:6px;text-align:left}
+.ms button.vrow.on{border:2px solid var(--host-primary);padding:7px 11px;font-weight:500}
+.ms .chips{display:flex;gap:4px;flex-shrink:0}
 .ms .tabs{display:flex;border-bottom:1px solid var(--host-border);margin-bottom:14px}
 .ms .tabs button{flex:1;background:transparent;border:none;border-bottom:2px solid transparent;border-radius:0;padding:10px 2px;font-size:13px;color:var(--host-fg-muted)}
 .ms .tabs button.on{color:var(--host-fg);border-bottom-color:var(--host-primary);font-weight:500}
@@ -34,7 +39,7 @@ body{margin:0;padding:16px;background:var(--host-bg);font-family:system-ui,-appl
 .ms .itr.hd{font-size:11px;color:var(--host-fg-muted);margin-bottom:2px}
 .ms .mut{color:var(--host-fg-muted);font-size:12px}
 .ms .hint{font-size:12px;color:var(--host-fg-muted);margin:0 0 10px}
-.ms .kv{display:flex;justify-content:space-between;padding:3px 0}
+.ms .kv{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 0}
 .ms .kv.big{font-size:16px;font-weight:500;border-top:1px solid var(--host-border);margin-top:6px;padding-top:8px}
 .ms .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .ms .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
@@ -69,6 +74,7 @@ body{margin:0;padding:16px;background:var(--host-bg);font-family:system-ui,-appl
 var KEY='masterSmeta_v1';
 var root=document.getElementById('ms');
 var pr=document.getElementById('pr');
+var VN=['Эконом','Стандарт','Премиум'],VS=['Э','С','П'];
 var BR=[6,10,16,20,25,32,40,50,63,80];
 var SEC=[{s:1.5,b:10},{s:2.5,b:16},{s:4,b:25},{s:6,b:32},{s:10,b:40},{s:16,b:63},{s:25,b:80}];
 var CP={1:{1.5:75,2.5:115,4:180,6:270,10:450,16:700,25:1100},3:{1.5:120,2.5:190,4:300,6:440,10:730,16:1150,25:1800}};
@@ -89,6 +95,13 @@ var TPL={
   ['mat','Щит на 36 модулей','шт',1,5500],['mat','Автомат вводной 3P 25 А','шт',1,1200],['mat','Автомат 1P 16 А','шт',14,350],
   ['mat','Автомат 1P 10 А','шт',6,320],['mat','УЗО 40 А 30 мА','шт',4,2500],['mat','Подрозетник','шт',70,25]]}
 };
+var UPG=[
+ {t:'Реле напряжения',v:[false,true,true],items:[['mat','Реле напряжения 63 А','шт',1,3500],['work','Установка реле напряжения','шт',1,800]]},
+ {t:'Маркировка и схема на щите',v:[false,true,true],items:[['work','Маркировка линий и схема на дверце щита','шт',1,1500]]},
+ {t:'Защита от перенапряжения (УЗИП)',v:[false,false,true],items:[['mat','Ограничитель перенапряжения (УЗИП)','шт',1,4500],['work','Установка УЗИП','шт',1,1000]]},
+ {t:'Защита от искрения (УЗДП)',v:[false,false,true],items:[['mat','Устройство защиты от дугового пробоя (УЗДП)','шт',2,6000],['work','Установка УЗДП','шт',2,500]]},
+ {t:'Розетки премиум-серии',v:[false,false,true],items:[['mat','Доплата за розетки и выключатели премиум-серии','шт',10,400]]}
+];
 function uid(){return Math.random().toString(36).slice(2,9)}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function num(v){var n=parseFloat(String(v).replace(',','.'));return isNaN(n)?0:n}
@@ -96,35 +109,62 @@ function money(n){return Math.round(n).toLocaleString('ru-RU')+' ₽'}
 function rub(n){return Math.round(n).toLocaleString('ru-RU')}
 function fmt(n){return (+n).toLocaleString('ru-RU')}
 function sstr(s){return String(s).replace('.',',')}
-function newObj(name,n){return {id:uid(),num:n,name:name,client:'',phone:'',address:'',items:[],lines:[],pay:null}}
-function load(){
- var s=null;
- try{s=JSON.parse(localStorage.getItem(KEY))}catch(e){}
- if(!(s&&s.objects&&s.objects.length)){
-  var o=newObj('Объект 1',1);
-  s={objects:[o],cur:o.id,tab:'obj',seq:1,doc:'kp',pct:30,
-   calc:{name:'Розетки кухня',P:3,phase:1,L:20,cos:0.95},
-   add:{type:'work',name:'',unit:'шт',qty:1,price:0}};
- }
+function newObj(name,n){return {id:uid(),num:n,name:name,client:'',phone:'',address:'',items:[],lines:[],pay:null,opt:false,ch:1}}
+function fresh(){
+ var o=newObj('Объект 1',1);
+ return {objects:[o],cur:o.id,tab:'obj',seq:1,doc:'kp',pct:30,
+  calc:{name:'Розетки кухня',P:3,phase:1,L:20,cos:0.95},
+  add:{type:'work',name:'',unit:'шт',qty:1,price:0}};
+}
+function norm(s){
  if(!s.me)s.me={name:'',phone:'',inn:'',war:12};
  if(!s.add)s.add={type:'work',name:'',unit:'шт',qty:1,price:0};
  if(!s.calc)s.calc={name:'Розетки кухня',P:3,phase:1,L:20,cos:0.95};
- s.objects.forEach(function(o){if(o.phone==null)o.phone='';if(!o.items)o.items=[];if(!o.lines)o.lines=[]});
+ if(!s.tab)s.tab='obj';
+ if(!s.doc)s.doc='kp';
+ if(s.pct==null)s.pct=30;
+ if(!s.seq)s.seq=s.objects.length;
+ s.objects.forEach(function(o){
+  if(o.phone==null)o.phone='';
+  if(!o.items)o.items=[];
+  if(!o.lines)o.lines=[];
+  if(o.opt==null)o.opt=false;
+  if(o.ch==null)o.ch=1;
+  o.items.forEach(function(i){if(!i.vs||i.vs.length!==3)i.vs=[true,true,true]});
+ });
  return s;
+}
+function load(){
+ var s=null;
+ try{s=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+ if(!(s&&s.objects&&s.objects.length))s=fresh();
+ return norm(s);
 }
 var st=load();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
 function cur(){var o=st.objects.filter(function(x){return x.id===st.cur})[0];if(!o){o=st.objects[0];st.cur=o.id}return o}
-function sums(o){var w=0,m=0;o.items.forEach(function(i){var v=i.qty*i.price;if(i.type==='work')w+=v;else m+=v});return {w:w,m:m,t:w+m}}
-function addItem(o,type,name,unit,qty,price){
- var ex=o.items.filter(function(i){return i.type===type&&i.name===name&&i.price===price})[0];
- if(ex)ex.qty+=qty;else o.items.push({id:uid(),type:type,name:name,unit:unit,qty:qty,price:price});
+function av(o){return o.opt?o.ch:-1}
+function inV(i,v){return v<0||!!i.vs[v]}
+function all3(i){return i.vs[0]&&i.vs[1]&&i.vs[2]}
+function grp(list){return list.filter(function(i){return i.type==='work'}).concat(list.filter(function(i){return i.type==='mat'}))}
+function its(o,v,type){return o.items.filter(function(i){return i.type===type&&inV(i,v)})}
+function sums(o,v){
+ if(v===undefined)v=av(o);
+ var w=0,m=0;
+ o.items.forEach(function(i){if(!inV(i,v))return;var x=i.qty*i.price;if(i.type==='work')w+=x;else m+=x});
+ return {w:w,m:m,t:w+m};
+}
+function addItem(o,type,name,unit,qty,price,vs){
+ vs=vs||[true,true,true];
+ var key=String(vs);
+ var ex=o.items.filter(function(i){return i.type===type&&i.name===name&&i.price===price&&String(i.vs)===key})[0];
+ if(ex)ex.qty+=qty;else o.items.push({id:uid(),type:type,name:name,unit:unit,qty:qty,price:price,vs:vs});
 }
 function pdig(p){var d=String(p||'').replace(/\D/g,'');if(d.length===11&&d.charAt(0)==='8')d='7'+d.slice(1);else if(d.length===10)d='7'+d;return d}
 function phActs(o){
  var d=pdig(o.phone);
  if(d.length<11)return '<span class="mut">Введите номер, чтобы позвонить или написать</span>';
- return '<a class="btn pri" href="tel:+'+d+'">Позвонить</a><button data-a="cpph">Скопировать</button><a class="btn" href="https://wa.me/'+d+'" target="_blank" rel="noopener">WhatsApp</a><a class="btn" href="https://t.me/+'+d+'" target="_blank" rel="noopener">Telegram</a>';
+ return '<a class="btn pri" href="tel:+'+d+'">Позвонить</a><a class="btn" href="sms:+'+d+'">SMS</a><button data-a="cpph">Скопировать номер</button><a class="btn" href="https://t.me/+'+d+'" target="_blank" rel="noopener">Telegram</a>';
 }
 function meLine(){var m=st.me,a=[m.name||'—'];if(m.inn)a.push('ИНН '+m.inn);if(m.phone)a.push('тел. '+m.phone);return a.join(', ')}
 function cliLine(o){return (o.client||'—')+(o.phone?', тел. '+o.phone:'')}
@@ -144,8 +184,13 @@ function calc(c){
  var d=drop(SEC[idx].s);
  return {I:I,b:b,s:SEC[idx].s,drop:d,raised:SEC[idx].s>base,warn:d>3,ph:ph};
 }
-function totalsHtml(o){var s=sums(o);
- return '<div class="kv"><span>Работы</span><span>'+money(s.w)+'</span></div><div class="kv"><span>Материалы</span><span>'+money(s.m)+'</span></div><div class="kv big"><span>Итого</span><span>'+money(s.t)+'</span></div>';
+function totalsHtml(o){
+ if(!o.opt){var s=sums(o);
+  return '<div class="kv"><span>Работы</span><span>'+money(s.w)+'</span></div><div class="kv"><span>Материалы</span><span>'+money(s.m)+'</span></div><div class="kv big"><span>Итого</span><span>'+money(s.t)+'</span></div>';
+ }
+ return '<div class="mut" style="margin-bottom:6px">Выбор заказчика — нажмите на вариант</div>'+VN.map(function(n,v){
+  return '<button class="vrow'+(o.ch===v?' on':'')+'" data-a="ch" data-v="'+v+'"><span>'+n+'</span><span>'+money(sums(o,v).t)+'</span></button>';
+ }).join('')+'<p class="hint" style="margin:4px 0 0">Акт, гарантия и оплата считаются по выбранному варианту.</p>';
 }
 function resHtml(){
  var r=calc(st.calc);
@@ -159,13 +204,27 @@ function resHtml(){
   (r.warn?'<div class="bad">Падение выше 3 %: сократите длину или разделите нагрузку</div>':'');
 }
 function docText(o,k){
- var d=new Date().toLocaleDateString('ru-RU'),s=sums(o);
- var W=o.items.filter(function(i){return i.type==='work'}),M=o.items.filter(function(i){return i.type==='mat'});
+ var d=new Date().toLocaleDateString('ru-RU'),v=av(o),s=sums(o);
+ var W=its(o,v,'work'),M=its(o,v,'mat');
  function ln(i){return '  '+i.name+' — '+fmt(i.qty)+' '+i.unit+' × '+money(i.price)+' = '+money(i.qty*i.price)}
  function lines(){return o.lines.map(function(l){return '  '+l.name+': '+fmt(l.P)+' кВт, '+l.phase+'ф, '+fmt(l.L)+' м — автомат '+l.b+' А, кабель '+sstr(l.s)+' мм², падение напряжения '+l.drop.toFixed(2)+' %'})}
  var head=['Исполнитель: '+meLine(),'Заказчик: '+cliLine(o),'Объект: '+(o.name||'—'),'Адрес: '+(o.address||'—')];
+ if(o.opt&&k!=='kp')head.push('Вариант: «'+VN[o.ch]+'»');
  var out=[];
- if(k==='kp'){
+ if(k==='kp'&&o.opt){
+  var C=grp(o.items.filter(all3));
+  out=['Коммерческое предложение № '+o.num+' от '+d].concat(head,['','Входит во все варианты:'],C.length?C.map(ln):['  —']);
+  for(var x=0;x<3;x++){
+   var E=grp(o.items.filter(function(i){return i.vs[x]&&!all3(i)}));
+   out.push('','Вариант «'+VN[x]+'»'+(E.length?', дополнительно:':': только общие позиции'));
+   out=out.concat(E.map(ln));
+   out.push('Итого «'+VN[x]+'»: '+money(sums(o,x).t));
+  }
+  if(o.lines.length)out=out.concat(['','Линии и защита:'],lines());
+  out.push('','Сравнение вариантов:');
+  VN.forEach(function(n,x){out.push('  '+n+' — '+money(sums(o,x).t))});
+  out.push('','Предложение действительно 14 дней. Цены на материалы уточняются на день закупки.');
+ }else if(k==='kp'){
   out=['Коммерческое предложение № '+o.num+' от '+d].concat(head,['','Работы:'],W.length?W.map(ln):['  —'],['Итого работы: '+money(s.w),'','Материалы:'],M.length?M.map(ln):['  —'],['Итого материалы: '+money(s.m)]);
   if(o.lines.length)out=out.concat(['','Линии и защита:'],lines());
   out=out.concat(['','Всего по смете: '+money(s.t),'','Предложение действительно 14 дней. Цены на материалы уточняются на день закупки.']);
@@ -181,8 +240,8 @@ function docText(o,k){
  return out.join('\n');
 }
 function docHtml(o,k){
- var d=new Date().toLocaleDateString('ru-RU'),s=sums(o),m=st.me;
- var W=o.items.filter(function(i){return i.type==='work'}),M=o.items.filter(function(i){return i.type==='mat'});
+ var d=new Date().toLocaleDateString('ru-RU'),v=av(o),s=sums(o),m=st.me;
+ var W=its(o,v,'work'),M=its(o,v,'mat');
  function tbl(list){
   if(!list.length)return '<p>—</p>';
   return '<table><tr><th>№</th><th>Наименование</th><th>Ед.</th><th>Кол-во</th><th>Цена, ₽</th><th>Сумма, ₽</th></tr>'+list.map(function(i,n){
@@ -195,8 +254,18 @@ function docHtml(o,k){
    return '<tr><td>'+esc(l.name)+'</td><td class="n">'+fmt(l.P)+'</td><td class="n">'+l.phase+'</td><td class="n">'+fmt(l.L)+'</td><td class="n">'+l.b+'</td><td class="n">'+sstr(l.s)+'</td><td class="n">'+l.drop.toFixed(2)+'</td></tr>';
   }).join('')+'</table>';
  }
- var meta='<table class="meta"><tr><td>Исполнитель: '+esc(meLine())+'</td></tr><tr><td>Заказчик: '+esc(cliLine(o))+'</td></tr><tr><td>Объект: '+esc(o.name||'—')+'</td></tr><tr><td>Адрес: '+esc(o.address||'—')+'</td></tr></table>';
+ var meta='<table class="meta"><tr><td>Исполнитель: '+esc(meLine())+'</td></tr><tr><td>Заказчик: '+esc(cliLine(o))+'</td></tr><tr><td>Объект: '+esc(o.name||'—')+'</td></tr><tr><td>Адрес: '+esc(o.address||'—')+'</td></tr>'+(o.opt&&k!=='kp'?'<tr><td>Вариант: «'+VN[o.ch]+'»</td></tr>':'')+'</table>';
  function sg(both){return '<div class="sign"><div>Исполнитель<br><br>________________ / '+esc(m.name||'')+'</div>'+(both?'<div>Заказчик<br><br>________________ / '+esc(o.client||'')+'</div>':'<div></div>')+'</div>'}
+ if(k==='kp'&&o.opt){
+  var h='<h1>Коммерческое предложение № '+o.num+' от '+d+'</h1>'+meta+'<h3>Входит во все варианты</h3>'+tbl(grp(o.items.filter(all3)));
+  for(var x=0;x<3;x++){
+   var E=grp(o.items.filter(function(i){return i.vs[x]&&!all3(i)}));
+   h+='<h3>Вариант «'+VN[x]+'»</h3>'+(E.length?'<p>Дополнительно к общим позициям:</p>'+tbl(E):'<p>Только общие позиции.</p>')+'<p>Итого: '+money(sums(o,x).t)+'</p>';
+  }
+  h+=ltbl()+'<h3>Сравнение вариантов</h3><table><tr><th>Вариант</th><th>Работы, ₽</th><th>Материалы, ₽</th><th>Итого, ₽</th></tr>'+[0,1,2].map(function(x){var q=sums(o,x);return '<tr><td>'+VN[x]+'</td><td class="n">'+rub(q.w)+'</td><td class="n">'+rub(q.m)+'</td><td class="n"><b>'+rub(q.t)+'</b></td></tr>'}).join('')+'</table>';
+  h+='<p>Выбранный вариант: &#9744; Эконом &nbsp;&nbsp; &#9744; Стандарт &nbsp;&nbsp; &#9744; Премиум</p><p>Предложение действительно 14 дней. Цены на материалы уточняются на день закупки.</p>'+sg(true);
+  return h;
+ }
  if(k==='kp'){
   return '<h1>Коммерческое предложение № '+o.num+' от '+d+'</h1>'+meta+
    '<h3>Работы</h3>'+tbl(W)+'<p>Итого работы: '+money(s.w)+'</p>'+
@@ -213,8 +282,15 @@ function docHtml(o,k){
   '<p>Гарантия на выполненные электромонтажные работы — '+warM()+' мес. с даты подписания акта, до '+warEnd()+'.</p>'+
   '<p>Гарантия не распространяется на: повреждение проводки третьими лицами, самостоятельное изменение схемы, превышение расчётной нагрузки линий.</p>'+ltbl()+sg(true);
 }
+function backupHtml(){
+ var lb=st.lastBackup,old=!lb||(Date.now()-lb)>7*24*3600*1000;
+ return '<h3>Резервная копия</h3><p class="hint">Все данные хранятся только на этом телефоне. Сохраняйте копию в файл хотя бы раз в неделю.</p>'+
+ '<p class="'+(old?'bad':'ok')+'" style="font-size:12px;margin:0 0 8px">'+(lb?'Последняя копия: '+new Date(lb).toLocaleDateString('ru-RU'):'Копию ещё не сохраняли')+'</p>'+
+ '<div class="wrap"><button data-a="exp">Сохранить копию</button><button data-a="imp">Загрузить из файла</button></div>'+
+ '<input type="file" id="ms-file" accept=".json,application/json" style="display:none">';
+}
 function vObj(o){
- var s=sums(o);
+ var sum=o.opt?VN.map(function(n,v){return '<div class="kv"><span>'+n+(o.ch===v?' (выбран)':'')+'</span><span>'+money(sums(o,v).t)+'</span></div>'}).join(''):'<div class="kv big"><span>Сумма</span><span>'+money(sums(o).t)+'</span></div>';
  return '<div class="row"><select class="grow" data-c="sel">'+st.objects.map(function(x){return '<option value="'+x.id+'"'+(x.id===o.id?' selected':'')+'>'+esc(x.name||'Без названия')+'</option>'}).join('')+'</select><button data-a="new">Новый объект</button></div>'+
  '<label>Название объекта<input data-f="name" value="'+esc(o.name)+'"></label>'+
  '<label>Имя заказчика<input data-f="client" value="'+esc(o.client)+'" placeholder="Например: Иван Петрович"></label>'+
@@ -222,19 +298,25 @@ function vObj(o){
  '<div class="wrap" id="ms-ph" style="margin:-2px 0 12px">'+phActs(o)+'</div>'+
  '<label>Адрес<input data-f="address" value="'+esc(o.address)+'"></label>'+
  '<h3>Добавить шаблон в смету</h3><div class="wrap">'+Object.keys(TPL).map(function(k){return '<button data-a="tpl" data-k="'+k+'">'+TPL[k].title+'</button>'}).join('')+'</div>'+
- '<h3>Сводка</h3><div class="card"><div class="kv"><span>Позиций в смете</span><span>'+o.items.length+'</span></div><div class="kv"><span>Рассчитано линий</span><span>'+o.lines.length+'</span></div><div class="kv big"><span>Сумма</span><span>'+money(s.t)+'</span></div></div>'+
- (st.objects.length>1?'<button class="x" data-a="delobj">Удалить объект</button>':'');
+ '<h3>Сводка</h3><div class="card"><div class="kv"><span>Позиций в смете</span><span>'+o.items.length+'</span></div><div class="kv"><span>Рассчитано линий</span><span>'+o.lines.length+'</span></div>'+sum+'</div>'+
+ (st.objects.length>1?'<button class="x" data-a="delobj">Удалить объект</button>':'')+
+ backupHtml();
 }
 function hdr(){return '<div class="itr hd"><span>Кол-во</span><span>Ед.</span><span></span><span>Цена за ед.</span><span style="text-align:right">Сумма</span></div>'}
-function itemHtml(i){
- return '<div class="it"><div class="itn"><span>'+esc(i.name)+'</span><button class="x" data-a="delitem" data-id="'+i.id+'" aria-label="Удалить">×</button></div>'+
+function itemHtml(i,o){
+ var chips=o.opt?'<span class="chips">'+VS.map(function(l,v){return '<button class="chip'+(i.vs[v]?' on':'')+'" data-a="vtog" data-id="'+i.id+'" data-v="'+v+'" aria-label="'+VN[v]+'">'+l+'</button>'}).join('')+'</span>':'';
+ return '<div class="it"><div class="itn"><span class="grow">'+esc(i.name)+'</span>'+chips+'<button class="x" data-a="delitem" data-id="'+i.id+'" aria-label="Удалить">×</button></div>'+
  '<div class="itr"><input type="number" min="0" step="any" data-q="'+i.id+'" value="'+i.qty+'" aria-label="Количество"><span class="mut">'+esc(i.unit)+'</span><span class="mut">×</span><input type="number" min="0" step="any" data-p="'+i.id+'" value="'+i.price+'" aria-label="Цена за единицу"><span class="sm" data-sum="'+i.id+'">'+money(i.qty*i.price)+'</span></div></div>';
 }
 function vEst(o){
  var W=o.items.filter(function(i){return i.type==='work'}),M=o.items.filter(function(i){return i.type==='mat'}),a=st.add;
- return (o.items.length?'':'<p class="mut">Смета пуста. Добавьте шаблон на вкладке «Объект», линию на вкладке «Расчёт» или позицию вручную ниже.</p>')+
- (W.length?'<h3>Работы</h3>'+hdr()+W.map(itemHtml).join(''):'')+
- (M.length?'<h3>Материалы</h3>'+hdr()+M.map(itemHtml).join(''):'')+
+ function list(L){return L.map(function(i){return itemHtml(i,o)}).join('')}
+ return '<div class="card"><div class="kv"><span style="font-weight:500">Три варианта для заказчика</span><button data-a="opt"'+(o.opt?'':' class="pri"')+'>'+(o.opt?'Выключить':'Включить')+'</button></div>'+
+ '<p class="hint" style="margin:6px 0 0">'+(o.opt?'У каждой позиции отметьте, в какие варианты она входит: Э — эконом, С — стандарт, П — премиум.':'Заказчик выбирает из «Эконом / Стандарт / Премиум» и чаще берёт средний вариант, а не уходит к другому мастеру.')+'</p></div>'+
+ (o.items.length?'':'<p class="mut">Смета пуста. Добавьте шаблон на вкладке «Объект», линию на вкладке «Расчёт» или позицию вручную ниже.</p>')+
+ (W.length?'<h3>Работы</h3>'+hdr()+list(W):'')+
+ (M.length?'<h3>Материалы</h3>'+hdr()+list(M):'')+
+ (o.opt?'<h3>Улучшения для вариантов</h3><div class="wrap">'+UPG.map(function(u,n){return '<button data-a="upg" data-n="'+n+'">'+u.t+' <span class="mut">'+u.v.map(function(b,v){return b?VS[v]:''}).join('')+'</span></button>'}).join('')+'</div><p class="hint" style="margin-top:8px">Добавляются сразу в нужные варианты. Цены примерные — поправьте под себя.</p>':'')+
  '<h3>Своя позиция</h3>'+
  '<div class="g2"><label>Тип<select data-add="type"><option value="work"'+(a.type==='work'?' selected':'')+'>Работа</option><option value="mat"'+(a.type==='mat'?' selected':'')+'>Материал</option></select></label>'+
  '<label>Название<input data-add="name" placeholder="Например: демонтаж щита" value="'+esc(a.name)+'"></label></div>'+
@@ -261,7 +343,7 @@ function vDoc(o){
  return '<div class="wrap seg" style="margin-bottom:10px">'+Object.keys(names).map(function(k){return '<button data-a="doc" data-k="'+k+'"'+(st.doc===k?' class="on"':'')+'>'+names[k]+'</button>'}).join('')+'</div>'+
  '<div class="card"><pre id="ms-doc">'+esc(docText(o,st.doc))+'</pre></div>'+
  '<div class="wrap"><button class="pri" data-a="print">Печать / PDF</button><button data-a="share">Отправить</button><button data-a="copy">Скопировать текст</button></div>'+
- '<p class="hint" style="margin-top:8px">«Печать / PDF» откроет окно печати: выберите принтер или «Сохранить как PDF», затем отправьте файл заказчику.</p>'+
+ '<p class="hint" style="margin-top:8px">«Печать / PDF» откроет окно печати: выберите принтер или «Сохранить как PDF». «Отправить» откроет список мессенджеров телефона, включая MAX.</p>'+
  '<h3>Ваши данные для документов</h3>'+
  '<label>ФИО или название<input data-me="name" value="'+esc(m.name)+'" placeholder="Иванов Иван Иванович"></label>'+
  '<div class="g2"><label>Ваш телефон<input type="tel" inputmode="tel" data-me="phone" value="'+esc(m.phone)+'"></label><label>ИНН (необязательно)<input inputmode="numeric" data-me="inn" value="'+esc(m.inn)+'"></label></div>'+
@@ -270,7 +352,7 @@ function vDoc(o){
 }
 function vPay(o){
  var s=sums(o),pct=num(st.pct),amt=s.t*pct/100,p=o.pay;
- var h='<div class="card"><div class="kv"><span>Сумма по смете</span><span>'+money(s.t)+'</span></div></div>';
+ var h='<div class="card"><div class="kv"><span>Сумма по смете'+(o.opt?' («'+VN[o.ch]+'»)':'')+'</span><span>'+money(s.t)+'</span></div></div>';
  if(!p){
   h+='<label>Предоплата, %<input type="number" min="0" max="100" step="1" data-pct="1" value="'+pct+'"></label>'+
   '<div class="card"><div class="kv big" style="border:none;margin:0;padding:0"><span>К оплате сейчас</span><span id="ms-amt">'+money(amt)+'</span></div></div>'+
@@ -284,7 +366,7 @@ function vPay(o){
 function render(){
  var o=cur(),tabs={obj:'Объект',est:'Смета',calc:'Расчёт',doc:'Документы',pay:'Оплата'};
  var v={obj:vObj,est:vEst,calc:vCalc,doc:vDoc,pay:vPay}[st.tab]||vObj;
- root.innerHTML='<h2>Мастер.Смета</h2><p class="sub">'+esc(o.name||'Объект')+' · '+money(sums(o).t)+'</p>'+
+ root.innerHTML='<h2>Мастер.Смета</h2><p class="sub">'+esc(o.name||'Объект')+' · '+money(sums(o).t)+(o.opt?' · '+VN[o.ch]:'')+'</p>'+
  '<div class="tabs">'+Object.keys(tabs).map(function(k){return '<button data-a="tab" data-k="'+k+'"'+(st.tab===k?' class="on"':'')+'>'+tabs[k]+'</button>'}).join('')+'</div>'+v(o);
 }
 function copyText(text,btn){
@@ -293,6 +375,15 @@ function copyText(text,btn){
  function done(){btn.textContent='Скопировано';back()}
  function fb(){var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){btn.textContent='Не удалось';back()}document.body.removeChild(ta)}
  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done,fb)}else fb();
+}
+function exportData(){
+ st.lastBackup=Date.now();save();
+ var name='master-smeta-'+new Date().toISOString().slice(0,10)+'.json';
+ var blob=new Blob([JSON.stringify(st)],{type:'application/json'});
+ var url=URL.createObjectURL(blob);
+ var a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a);
+ setTimeout(function(){URL.revokeObjectURL(url)},2000);
+ render();
 }
 root.addEventListener('click',function(e){
  var t=e.target.closest('[data-a]');if(!t)return;
@@ -303,6 +394,10 @@ root.addEventListener('click',function(e){
  else if(a==='tpl'){TPL[t.dataset.k].items.forEach(function(i){addItem(o,i[0],i[1],i[2],i[3],i[4])});st.tab='est'}
  else if(a==='delitem')o.items=o.items.filter(function(i){return i.id!==t.dataset.id});
  else if(a==='additem'){var d=st.add;if(!String(d.name).trim())return;addItem(o,d.type,String(d.name).trim(),d.unit||'шт',num(d.qty),num(d.price));st.add.name=''}
+ else if(a==='opt')o.opt=!o.opt;
+ else if(a==='vtog'){var it=o.items.filter(function(i){return i.id===t.dataset.id})[0];if(it){var vv=+t.dataset.v;it.vs[vv]=!it.vs[vv]}}
+ else if(a==='upg'){var u=UPG[+t.dataset.n];u.items.forEach(function(i){addItem(o,i[0],i[1],i[2],i[3],i[4],u.v.slice())})}
+ else if(a==='ch')o.ch=+t.dataset.v;
  else if(a==='addline'){
   var r=calc(st.calc);if(!r||r.over)return;
   var c=st.calc,L=num(c.L),nm=String(c.name).trim()||'Линия '+(o.lines.length+1);
@@ -322,6 +417,8 @@ root.addEventListener('click',function(e){
   if(navigator.share){navigator.share({title:'Мастер.Смета',text:tx}).catch(function(){})}else copyText(tx,t);
   return;
  }
+ else if(a==='exp'){exportData();return}
+ else if(a==='imp'){var f=document.getElementById('ms-file');if(f)f.click();return}
  else if(a==='paycreate'){var s=sums(o);if(!(s.t>0))return;o.pay={amount:s.t*num(st.pct)/100,status:'wait'}}
  else if(a==='paypaid'){if(o.pay)o.pay.status='paid'}
  else if(a==='payreset')o.pay=null;
@@ -348,7 +445,21 @@ root.addEventListener('input',function(e){
  save();
 });
 root.addEventListener('change',function(e){
- if(e.target.dataset.c==='sel'){st.cur=e.target.value;save();render()}
+ var t=e.target;
+ if(t.dataset.c==='sel'){st.cur=t.value;save();render();return}
+ if(t.id==='ms-file'){
+  var f=t.files&&t.files[0];if(!f)return;
+  var rd=new FileReader();
+  rd.onload=function(){
+   var s;
+   try{s=JSON.parse(rd.result);if(!(s&&s.objects&&s.objects.length))throw new Error('bad')}
+   catch(err){alert('Не удалось прочитать файл. Выберите файл копии Мастер.Смета.');return}
+   if(!confirm('Заменить текущие данные данными из файла?'))return;
+   st=norm(s);save();render();alert('Данные загружены');
+  };
+  rd.readAsText(f);
+  t.value='';
+ }
 });
 render();
 })();
