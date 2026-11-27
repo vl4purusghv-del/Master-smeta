@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Мастер.Смета</title>
+<style>
+:root{--host-bg:#ffffff;--host-fg:#111827;--host-fg-muted:#6b7280;--host-card:#f9fafb;--host-card-fg:#111827;--host-input:#ffffff;--host-border:#d1d5db;--host-border-hover:#2563eb;--host-primary:#2563eb;--host-secondary:#f3f4f6;--host-secondary-fg:#111827;--host-success:#16a34a;--host-error:#dc2626}
+@media (prefers-color-scheme:dark){:root{--host-bg:#111827;--host-fg:#f9fafb;--host-fg-muted:#9ca3af;--host-card:#1f2937;--host-card-fg:#f9fafb;--host-input:#1f2937;--host-border:#374151;--host-border-hover:#3b82f6;--host-primary:#3b82f6;--host-secondary:#374151;--host-secondary-fg:#f9fafb;--host-success:#22c55e;--host-error:#ef4444}}
+body{margin:0;padding:16px;background:var(--host-bg);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.ms{max-width:480px;margin:0 auto;color:var(--host-fg);font-size:14px;line-height:1.4}
+.ms *{box-sizing:border-box}
+.ms h2{font-size:18px;font-weight:500;margin:0 0 2px}
+.ms h3{font-size:14px;font-weight:500;margin:16px 0 8px}
+.ms .sub{font-size:12px;color:var(--host-fg-muted);margin:0 0 12px}
+.ms input,.ms select{background:var(--host-input);color:var(--host-fg);border:1px solid var(--host-border);border-radius:8px;padding:8px 10px;font-size:16px;font-family:inherit;width:100%}
+.ms input:focus,.ms select:focus{outline:none;border-color:var(--host-border-hover)}
+.ms label{display:block;font-size:12px;color:var(--host-fg-muted);margin-bottom:10px}
+.ms label input,.ms label select{margin-top:4px}
+.ms button{font-family:inherit;font-size:14px;border-radius:8px;padding:8px 12px;border:1px solid var(--host-border);background:var(--host-secondary);color:var(--host-secondary-fg);cursor:pointer}
+.ms button.pri{background:var(--host-primary);color:white;border-color:var(--host-primary)}
+.ms button.x{padding:2px 8px;font-size:12px;background:transparent;color:var(--host-fg-muted)}
+.ms .tabs{display:flex;border-bottom:1px solid var(--host-border);margin-bottom:14px}
+.ms .tabs button{flex:1;background:transparent;border:none;border-bottom:2px solid transparent;border-radius:0;padding:10px 2px;font-size:13px;color:var(--host-fg-muted)}
+.ms .tabs button.on{color:var(--host-fg);border-bottom-color:var(--host-primary);font-weight:500}
+.ms .row{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.ms .grow{flex:1;min-width:0}
+.ms .card{background:var(--host-card);color:var(--host-card-fg);border:1px solid var(--host-border);border-radius:12px;padding:12px;margin-bottom:10px}
+.ms .it{border-bottom:1px solid var(--host-border);padding:8px 0}
+.ms .itn{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;margin-bottom:6px}
+.ms .itr{display:grid;grid-template-columns:80px 34px 12px 96px 1fr;gap:6px;align-items:center;font-size:13px}
+.ms .itr input{padding:6px 8px}
+.ms .itr .sm{text-align:right;font-weight:500}
+.ms .mut{color:var(--host-fg-muted);font-size:12px}
+.ms .kv{display:flex;justify-content:space-between;padding:3px 0}
+.ms .kv.big{font-size:16px;font-weight:500;border-top:1px solid var(--host-border);margin-top:6px;padding-top:8px}
+.ms .g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ms .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.ms pre{white-space:pre-wrap;font-family:inherit;font-size:13px;margin:0;color:var(--host-card-fg)}
+.ms .ok{color:var(--host-success)}
+.ms .bad{color:var(--host-error)}
+.ms .wrap{display:flex;flex-wrap:wrap;gap:8px}
+.ms .seg button.on{border-color:var(--host-primary);font-weight:500}
+</style>
+</head>
+<body>
+<div class="ms" id="ms"></div>
+<script>
+(function(){
+var KEY='masterSmeta_v1';
+var root=document.getElementById('ms');
+var BR=[6,10,16,20,25,32,40,50,63,80];
+var SEC=[{s:1.5,b:10},{s:2.5,b:16},{s:4,b:25},{s:6,b:32},{s:10,b:40},{s:16,b:63},{s:25,b:80}];
+var CP={1:{1.5:75,2.5:115,4:180,6:270,10:450,16:700,25:1100},3:{1.5:120,2.5:190,4:300,6:440,10:730,16:1150,25:1800}};
+var TPL={
+ flat:{title:'Квартира 1-комн.',items:[
+  ['work','Штробление стен','м',60,350],['work','Прокладка кабеля','м',250,90],['work','Установка подрозетника','шт',35,350],
+  ['work','Монтаж розеток и выключателей','шт',35,300],['work','Сборка щита','мод.',18,400],
+  ['mat','Кабель ВВГнг(А)-LS 3×2,5','м',150,115],['mat','Кабель ВВГнг(А)-LS 3×1,5','м',100,75],['mat','Подрозетник','шт',35,25],
+  ['mat','Щит на 18 модулей','шт',1,2500],['mat','Автомат 1P 16 А','шт',8,350],['mat','Автомат 1P 10 А','шт',3,320],['mat','УЗО 40 А 30 мА','шт',2,2500]]},
+ board:{title:'Щит на 12 модулей',items:[
+  ['work','Сборка щита','мод.',12,400],['work','Подключение линии в щите','шт',6,500],
+  ['mat','Щит на 12 модулей','шт',1,1800],['mat','Автомат вводной 2P 40 А','шт',1,900],['mat','Автомат 1P 16 А','шт',4,350],
+  ['mat','Автомат 1P 10 А','шт',2,320],['mat','УЗО 40 А 30 мА','шт',1,2500],['mat','Шина, гребёнка, наконечники','компл.',1,900]]},
+ house:{title:'Частный дом 15 кВт',items:[
+  ['work','Монтаж вводного кабеля','м',30,250],['work','Сборка щита','мод.',36,400],['work','Прокладка кабеля','м',600,90],
+  ['work','Установка подрозетника','шт',70,350],['work','Монтаж розеток и выключателей','шт',70,300],['work','Монтаж контура заземления','шт',1,15000],
+  ['mat','Кабель ВВГнг(А)-LS 5×10','м',30,730],['mat','Кабель ВВГнг(А)-LS 3×2,5','м',350,115],['mat','Кабель ВВГнг(А)-LS 3×1,5','м',250,75],
+  ['mat','Щит на 36 модулей','шт',1,5500],['mat','Автомат вводной 3P 25 А','шт',1,1200],['mat','Автомат 1P 16 А','шт',14,350],
+  ['mat','Автомат 1P 10 А','шт',6,320],['mat','УЗО 40 А 30 мА','шт',4,2500],['mat','Подрозетник','шт',70,25]]}
+};
+function uid(){return Math.random().toString(36).slice(2,9)}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function num(v){var n=parseFloat(String(v).replace(',','.'));return isNaN(n)?0:n}
+function money(n){return Math.round(n).toLocaleString('ru-RU')+' ₽'}
+function fmt(n){return (+n).toLocaleString('ru-RU')}
+function sstr(s){return String(s).replace('.',',')}
+function newObj(name,n){return {id:uid(),num:n,name:name,client:'',address:'',items:[],lines:[],pay:null}}
+function load(){
+ try{var s=JSON.parse(localStorage.getItem(KEY));if(s&&s.objects&&s.objects.length)return s}catch(e){}
+ var o=newObj('Объект 1',1);
+ return {objects:[o],cur:o.id,tab:'obj',seq:1,doc:'kp',pct:30,
+  calc:{name:'Розетки кухня',P:3,phase:1,L:20,cos:0.95},
+  add:{type:'work',name:'',unit:'шт',qty:1,price:0}};
+}
+var st=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+function cur(){var o=st.objects.filter(function(x){return x.id===st.cur})[0];if(!o){o=st.objects[0];st.cur=o.id}return o}
+function sums(o){var w=0,m=0;o.items.forEach(function(i){var v=i.qty*i.price;if(i.type==='work')w+=v;else m+=v});return {w:w,m:m,t:w+m}}
+function addItem(o,type,name,unit,qty,price){
+ var ex=o.items.filter(function(i){return i.type===type&&i.name===name&&i.price===price})[0];
+ if(ex)ex.qty+=qty;else o.items.push({id:uid(),type:type,name:name,unit:unit,qty:qty,price:price});
+}
+function calc(c){
+ var P=num(c.P),L=num(c.L),cos=num(c.cos)||1,ph=+c.phase===3?3:1;
+ if(!(P>0))return null;
+ var U=ph===3?400:230;
+ var I=ph===3?P*1000/(1.732*U*cos):P*1000/(U*cos);
+ var b=BR.filter(function(x){return x>=I})[0];
+ if(!b)return {I:I,over:true};
+ var idx=0;while(idx<SEC.length-1&&SEC[idx].b<b)idx++;
+ function drop(s){return (ph===3?1.732:2)*0.0175*L*I/s/U*100}
+ var base=SEC[idx].s;
+ while(drop(SEC[idx].s)>3&&idx<SEC.length-1)idx++;
+ var d=drop(SEC[idx].s);
+ return {I:I,b:b,s:SEC[idx].s,drop:d,raised:SEC[idx].s>base,warn:d>3,ph:ph};
+}
+function totalsHtml(o){var s=sums(o);
+ return '<div class="kv"><span>Работы</span><span>'+money(s.w)+'</span></div><div class="kv"><span>Материалы</span><span>'+money(s.m)+'</span></div><div class="kv big"><span>Итого</span><span>'+money(s.t)+'</span></div>';
+}
+function resHtml(){
+ var r=calc(st.calc);
+ if(!r)return '<span class="mut">Введите мощность линии</span>';
+ if(r.over)return '<div class="kv"><span>Расчётный ток</span><span>'+r.I.toFixed(1)+' А</span></div><div class="bad">Ток выше 80 А: нужен индивидуальный расчёт</div>';
+ return '<div class="kv"><span>Расчётный ток</span><span>'+r.I.toFixed(1)+' А</span></div>'+
+  '<div class="kv"><span>Автомат</span><span>'+(r.ph===3?'3P ':'1P ')+r.b+' А</span></div>'+
+  '<div class="kv"><span>Кабель, медь</span><span>'+(r.ph===3?'5×':'3×')+sstr(r.s)+' мм²</span></div>'+
+  '<div class="kv"><span>Падение напряжения</span><span class="'+(r.warn?'bad':'ok')+'">'+r.drop.toFixed(2)+' %</span></div>'+
+  (r.raised?'<div class="mut">Сечение увеличено из-за длины линии</div>':'')+
+  (r.warn?'<div class="bad">Падение выше 3 %: сократите длину или разделите нагрузку</div>':'');
+}
+function docText(o,k){
+ var d=new Date().toLocaleDateString('ru-RU'),s=sums(o);
+ var W=o.items.filter(function(i){return i.type==='work'}),M=o.items.filter(function(i){return i.type==='mat'});
+ function ln(i){return '  '+i.name+' — '+fmt(i.qty)+' '+i.unit+' × '+money(i.price)+' = '+money(i.qty*i.price)}
+ function lines(){return o.lines.map(function(l){return '  '+l.name+': '+fmt(l.P)+' кВт, '+l.phase+'ф, '+fmt(l.L)+' м — автомат '+l.b+' А, кабель '+sstr(l.s)+' мм², ΔU '+l.drop.toFixed(2)+' %'})}
+ var head=['Объект: '+(o.name||'—'),'Заказчик: '+(o.client||'—'),'Адрес: '+(o.address||'—')];
+ var out=[];
+ if(k==='kp'){
+  out=['Коммерческое предложение № '+o.num+' от '+d].concat(head,['','Работы:'],W.length?W.map(ln):['  —'],['Итого работы: '+money(s.w),'','Материалы:'],M.length?M.map(ln):['  —'],['Итого материалы: '+money(s.m)]);
+  if(o.lines.length)out=out.concat(['','Линии и защита:'],lines());
+  out=out.concat(['','Всего по смете: '+money(s.t),'','Предложение действительно 14 дней. Цены на материалы уточняются на день закупки.']);
+ }else if(k==='act'){
+  out=['Акт выполненных работ № '+o.num+' от '+d].concat(head,['','Выполненные работы:'],W.length?W.map(ln):['  —'],['','Стоимость работ: '+money(s.w),'Материалы: '+money(s.m),'Всего к оплате: '+money(s.t),'','Работы выполнены в полном объёме. Заказчик претензий по объёму, качеству и срокам не имеет.','','Исполнитель: ____________     Заказчик: ____________']);
+ }else{
+  out=['Гарантийный талон № '+o.num+' от '+d].concat(head,['','Гарантия на выполненные электромонтажные работы — 12 месяцев с даты подписания акта.','','Гарантия не распространяется на: повреждение проводки третьими лицами, самостоятельное изменение схемы, превышение расчётной нагрузки линий.']);
+  if(o.lines.length)out=out.concat(['','Расчётные нагрузки линий:'],lines());
+  out=out.concat(['','Исполнитель: ____________']);
+ }
+ return out.join('\n');
+}
+function vObj(o){
+ var s=sums(o);
+ return '<div class="row"><select class="grow" data-c="sel">'+st.objects.map(function(x){return '<option value="'+x.id+'"'+(x.id===o.id?' selected':'')+'>'+esc(x.name||'Без названия')+'</option>'}).join('')+'</select><button data-a="new">Новый объект</button></div>'+
+ '<label>Название объекта<input data-f="name" value="'+esc(o.name)+'"></label>'+
+ '<label>Заказчик<input data-f="client" value="'+esc(o.client)+'" placeholder="Имя и телефон"></label>'+
+ '<label>Адрес<input data-f="address" value="'+esc(o.address)+'"></label>'+
+ '<h3>Добавить шаблон в смету</h3><div class="wrap">'+Object.keys(TPL).map(function(k){return '<button data-a="tpl" data-k="'+k+'">'+TPL[k].title+'</button>'}).join('')+'</div>'+
+ '<h3>Сводка</h3><div class="card"><div class="kv"><span>Позиций в смете</span><span>'+o.items.length+'</span></div><div class="kv"><span>Рассчитано линий</span><span>'+o.lines.length+'</span></div><div class="kv big"><span>Сумма</span><span>'+money(s.t)+'</span></div></div>'+
+ (st.objects.length>1?'<button class="x" data-a="delobj">Удалить объект</button>':'');
+}
+function itemHtml(i){
+ return '<div class="it"><div class="itn"><span>'+esc(i.name)+'</span><button class="x" data-a="delitem" data-id="'+i.id+'" aria-label="Удалить">×</button></div>'+
+ '<div class="itr"><input type="number" min="0" step="any" data-q="'+i.id+'" value="'+i.qty+'" aria-label="Количество"><span class="mut">'+esc(i.unit)+'</span><span class="mut">×</span><input type="number" min="0" step="any" data-p="'+i.id+'" value="'+i.price+'" aria-label="Цена"><span class="sm" data-sum="'+i.id+'">'+money(i.qty*i.price)+'</span></div></div>';
+}
+function vEst(o){
+ var W=o.items.filter(function(i){return i.type==='work'}),M=o.items.filter(function(i){return i.type==='mat'}),a=st.add;
+ return (o.items.length?'':'<p class="mut">Смета пуста. Добавьте шаблон на вкладке «Объект», линию на вкладке «Расчёт» или позицию вручную.</p>')+
+ (W.length?'<h3>Работы</h3>'+W.map(itemHtml).join(''):'')+
+ (M.length?'<h3>Материалы</h3>'+M.map(itemHtml).join(''):'')+
+ '<h3>Своя позиция</h3><div class="g2"><select data-add="type"><option value="work"'+(a.type==='work'?' selected':'')+'>Работа</option><option value="mat"'+(a.type==='mat'?' selected':'')+'>Материал</option></select><input data-add="name" placeholder="Название" value="'+esc(a.name)+'"></div>'+
+ '<div class="g3" style="margin-top:8px"><input data-add="unit" placeholder="Ед." value="'+esc(a.unit)+'" aria-label="Единица"><input type="number" min="0" step="any" data-add="qty" placeholder="Кол-во" value="'+a.qty+'" aria-label="Количество"><input type="number" min="0" step="any" data-add="price" placeholder="Цена" value="'+a.price+'" aria-label="Цена"></div>'+
+ '<div style="margin:8px 0 14px"><button data-a="additem">Добавить позицию</button></div>'+
+ '<div class="card" id="ms-tot">'+totalsHtml(o)+'</div>';
+}
+function vCalc(o){
+ var c=st.calc;
+ return '<label>Название линии<input data-k="name" value="'+esc(c.name)+'"></label>'+
+ '<div class="g2"><label>Мощность, кВт<input type="number" min="0" step="any" data-k="P" value="'+c.P+'"></label><label>Сеть<select data-k="phase"><option value="1"'+(+c.phase===1?' selected':'')+'>1 фаза, 230 В</option><option value="3"'+(+c.phase===3?' selected':'')+'>3 фазы, 400 В</option></select></label></div>'+
+ '<div class="g2"><label>Длина линии, м<input type="number" min="0" step="any" data-k="L" value="'+c.L+'"></label><label>cos φ<input type="number" min="0.5" max="1" step="0.01" data-k="cos" value="'+c.cos+'"></label></div>'+
+ '<div class="card" id="ms-res">'+resHtml()+'</div>'+
+ '<button class="pri" data-a="addline">Добавить линию в смету</button>'+
+ (o.lines.length?'<h3>Линии объекта</h3>'+o.lines.map(function(l){return '<div class="it"><div class="itn"><span>'+esc(l.name)+'</span><button class="x" data-a="delline" data-id="'+l.id+'" aria-label="Удалить">×</button></div><div class="mut">'+fmt(l.P)+' кВт, '+l.phase+'ф, '+fmt(l.L)+' м · автомат '+l.b+' А · кабель '+sstr(l.s)+' мм² · ΔU '+l.drop.toFixed(2)+' %</div></div>'}).join(''):'')+
+ '<p class="mut" style="margin-top:12px">Упрощённый расчёт: медь, ПВХ-изоляция, без поправок на способ прокладки и температуру. Не заменяет проверку по ПУЭ и ГОСТ Р 50571.</p>';
+}
+function vDoc(o){
+ var names={kp:'Предложение',act:'Акт',war:'Гарантия'};
+ return '<div class="wrap seg" style="margin-bottom:10px">'+Object.keys(names).map(function(k){return '<button data-a="doc" data-k="'+k+'"'+(st.doc===k?' class="on"':'')+'>'+names[k]+'</button>'}).join('')+'</div>'+
+ '<div class="card"><pre id="ms-doc">'+esc(docText(o,st.doc))+'</pre></div><button data-a="copy">Скопировать текст</button>';
+}
+function vPay(o){
+ var s=sums(o),pct=num(st.pct),amt=s.t*pct/100,p=o.pay;
+ var h='<div class="card"><div class="kv"><span>Сумма по смете</span><span>'+money(s.t)+'</span></div></div>';
+ if(!p){
+  h+='<label>Предоплата, %<input type="number" min="0" max="100" step="1" data-pct="1" value="'+pct+'"></label>'+
+  '<div class="card"><div class="kv big" style="border:none;margin:0;padding:0"><span>К оплате сейчас</span><span id="ms-amt">'+money(amt)+'</span></div></div>'+
+  '<button class="pri" data-a="paycreate">Выставить счёт</button>';
+ }else{
+  h+='<div class="card"><div class="kv"><span>Счёт на сумму</span><span>'+money(p.amount)+'</span></div><div class="kv"><span>Статус</span><span class="'+(p.status==='paid'?'ok':'')+'">'+(p.status==='paid'?'Оплачено, чек сформирован':'Ожидает оплаты')+'</span></div><div class="kv"><span>Остаток по смете</span><span>'+money(Math.max(0,s.t-(p.status==='paid'?p.amount:0)))+'</span></div></div>'+
+  '<div class="wrap">'+(p.status==='paid'?'':'<button class="pri" data-a="paypaid">Отметить оплату</button>')+'<button data-a="payreset">Новый счёт</button></div>';
+ }
+ return h+'<p class="mut" style="margin-top:12px">Демо-режим: в рабочей версии здесь ссылка на оплату по СБП и автоматический чек в «Мой налог».</p>';
+}
+function render(){
+ var o=cur(),tabs={obj:'Объект',est:'Смета',calc:'Расчёт',doc:'Документы',pay:'Оплата'};
+ var v={obj:vObj,est:vEst,calc:vCalc,doc:vDoc,pay:vPay}[st.tab]||vObj;
+ root.innerHTML='<h2>Мастер.Смета</h2><p class="sub">Прототип: '+esc(o.name||'объект')+' · '+money(sums(o).t)+'</p>'+
+ '<div class="tabs">'+Object.keys(tabs).map(function(k){return '<button data-a="tab" data-k="'+k+'"'+(st.tab===k?' class="on"':'')+'>'+tabs[k]+'</button>'}).join('')+'</div>'+v(o);
+}
+function copyText(text,btn){
+ function done(){btn.textContent='Скопировано';setTimeout(function(){btn.textContent='Скопировать текст'},1500)}
+ function fb(){var ta=document.createElement('textarea');ta.value=text;root.appendChild(ta);ta.select();try{document.execCommand('copy');done()}catch(e){btn.textContent='Выделите текст вручную'}root.removeChild(ta)}
+ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done,fb)}else fb();
+}
+root.addEventListener('click',function(e){
+ var t=e.target.closest('[data-a]');if(!t)return;
+ var a=t.dataset.a,o=cur();
+ if(a==='tab')st.tab=t.dataset.k;
+ else if(a==='new'){st.seq=(st.seq||1)+1;var n=newObj('Объект '+st.seq,st.seq);st.objects.push(n);st.cur=n.id}
+ else if(a==='delobj'){st.objects=st.objects.filter(function(x){return x.id!==o.id});st.cur=st.objects[0].id}
+ else if(a==='tpl'){TPL[t.dataset.k].items.forEach(function(i){addItem(o,i[0],i[1],i[2],i[3],i[4])});st.tab='est'}
+ else if(a==='delitem')o.items=o.items.filter(function(i){return i.id!==t.dataset.id});
+ else if(a==='additem'){var d=st.add;if(!String(d.name).trim())return;addItem(o,d.type,String(d.name).trim(),d.unit||'шт',num(d.qty),num(d.price));st.add.name=''}
+ else if(a==='addline'){
+  var r=calc(st.calc);if(!r||r.over)return;
+  var c=st.calc,L=num(c.L),nm=String(c.name).trim()||'Линия '+(o.lines.length+1);
+  o.lines.push({id:uid(),name:nm,P:num(c.P),phase:r.ph,L:L,b:r.b,s:r.s,drop:r.drop});
+  addItem(o,'mat','Кабель ВВГнг(А)-LS '+(r.ph===3?'5×':'3×')+sstr(r.s),'м',Math.ceil(L*1.1),CP[r.ph][r.s]);
+  addItem(o,'mat','Автомат '+(r.ph===3?'3P ':'1P ')+r.b+' А','шт',1,r.ph===3?(r.b<=32?1200:1800):(r.b<=32?350:600));
+  if(L>0)addItem(o,'work','Прокладка кабеля','м',L,90);
+  addItem(o,'work','Подключение линии в щите','шт',1,500);
+ }
+ else if(a==='delline')o.lines=o.lines.filter(function(l){return l.id!==t.dataset.id});
+ else if(a==='doc')st.doc=t.dataset.k;
+ else if(a==='copy'){copyText(docText(o,st.doc),t);return}
+ else if(a==='paycreate'){var s=sums(o);if(!(s.t>0))return;o.pay={amount:s.t*num(st.pct)/100,status:'wait'}}
+ else if(a==='paypaid'){if(o.pay)o.pay.status='paid'}
+ else if(a==='payreset')o.pay=null;
+ save();render();
+});
+root.addEventListener('input',function(e){
+ var t=e.target,o=cur(),ds=t.dataset;
+ if(ds.k){st.calc[ds.k]=t.value;var r=document.getElementById('ms-res');if(r)r.innerHTML=resHtml()}
+ else if(ds.add){st.add[ds.add]=t.value}
+ else if(ds.f){o[ds.f]=t.value;if(ds.f==='name'){var op=root.querySelector('select[data-c="sel"] option[value="'+o.id+'"]');if(op)op.textContent=t.value||'Без названия'}}
+ else if(ds.q||ds.p){
+  var id=ds.q||ds.p,it=o.items.filter(function(i){return i.id===id})[0];if(!it)return;
+  if(ds.q)it.qty=num(t.value);else it.price=num(t.value);
+  var sm=root.querySelector('[data-sum="'+id+'"]');if(sm)sm.textContent=money(it.qty*it.price);
+  var tot=document.getElementById('ms-tot');if(tot)tot.innerHTML=totalsHtml(o);
+ }
+ else if(ds.pct){st.pct=Math.min(100,Math.max(0,num(t.value)));var am=document.getElementById('ms-amt');if(am)am.textContent=money(sums(o).t*st.pct/100)}
+ else return;
+ save();
+});
+root.addEventListener('change',function(e){
+ if(e.target.dataset.c==='sel'){st.cur=e.target.value;save();render()}
+});
+render();
+})();
+</script>
+</body>
+</html>
